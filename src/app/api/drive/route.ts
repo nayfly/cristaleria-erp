@@ -6,13 +6,30 @@ import { FacturaPDF } from '@/components/pdf/factura-pdf'
 import { PresupuestoPDF } from '@/components/pdf/presupuesto-pdf'
 import React from 'react'
 
-/**
- * POST /api/drive
- * Body: { tipo: 'factura' | 'presupuesto', id: string }
- *
- * Genera el PDF, lo sube a Supabase Storage y a Google Drive,
- * y guarda el drive_file_id en la base de datos.
- */
+export async function GET() {
+  try {
+    const { google } = await import('googleapis')
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: (process.env.GOOGLE_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
+      },
+      scopes: ['https://www.googleapis.com/auth/drive'],
+    })
+    const drive = google.drive({ version: 'v3', auth })
+    const { data } = await drive.files.list({ pageSize: 1, fields: 'files(id,name)' })
+    return NextResponse.json({
+      ok: true,
+      client_email: process.env.GOOGLE_CLIENT_EMAIL,
+      folder_id: process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID,
+      key_length: process.env.GOOGLE_PRIVATE_KEY?.length,
+      files: data.files,
+    })
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: e.message, detail: e?.response?.data }, { status: 500 })
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Auth
