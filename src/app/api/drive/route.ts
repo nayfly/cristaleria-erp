@@ -134,10 +134,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: 'tipo inválido' }, { status: 400 })
   } catch (error: any) {
-    console.error('Error subiendo a Drive:', error?.message ?? error)
-    return NextResponse.json(
-      { error: error?.message ?? 'Error interno', detail: error?.response?.data ?? null },
-      { status: 500 }
-    )
+    const msg = error?.message ?? String(error)
+    const detail = error?.response?.data ?? error?.stack ?? null
+    console.error('Error subiendo a Drive:', msg, JSON.stringify(detail))
+    return NextResponse.json({ error: msg, detail }, { status: 500 })
   }
 }
