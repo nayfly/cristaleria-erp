@@ -14,6 +14,8 @@ async function obtenerOCrearCarpeta(drive: any, nombre: string, padreId: string)
   const { data } = await drive.files.list({
     q: `name='${nombre}' and mimeType='application/vnd.google-apps.folder' and '${padreId}' in parents and trashed=false`,
     fields: 'files(id)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
   })
   if (data.files?.length > 0) return data.files[0].id
 
@@ -24,6 +26,7 @@ async function obtenerOCrearCarpeta(drive: any, nombre: string, padreId: string)
       parents: [padreId],
     },
     fields: 'id',
+    supportsAllDrives: true,
   })
   return carpeta.id
 }
@@ -35,6 +38,8 @@ async function subirPDF({ buffer, nombre, carpetaId }: { buffer: Buffer; nombre:
   const { data: existing } = await drive.files.list({
     q: `name='${nombre}.pdf' and '${carpetaId}' in parents and trashed=false`,
     fields: 'files(id)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
   })
 
   if (existing.files?.length > 0) {
@@ -42,6 +47,7 @@ async function subirPDF({ buffer, nombre, carpetaId }: { buffer: Buffer; nombre:
       fileId: existing.files[0].id,
       media: { mimeType: 'application/pdf', body: stream },
       fields: 'id',
+      supportsAllDrives: true,
     })
     return data.id!
   }
@@ -50,13 +56,14 @@ async function subirPDF({ buffer, nombre, carpetaId }: { buffer: Buffer; nombre:
     requestBody: { name: `${nombre}.pdf`, parents: [carpetaId] },
     media: { mimeType: 'application/pdf', body: stream },
     fields: 'id',
+    supportsAllDrives: true,
   })
   return data.id!
 }
 
 export async function subirFacturaADrive({ buffer, numero, año }: { buffer: Buffer; numero: string; año: string }): Promise<{ driveFileId: string }> {
   const drive = getDriveClient()
-  const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!
+  const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!.trim()
   const carpetaFacturas = await obtenerOCrearCarpeta(drive, 'Facturas', rootFolderId)
   const carpetaAño = await obtenerOCrearCarpeta(drive, año, carpetaFacturas)
   const driveFileId = await subirPDF({ buffer, nombre: numero, carpetaId: carpetaAño })
@@ -65,7 +72,7 @@ export async function subirFacturaADrive({ buffer, numero, año }: { buffer: Buf
 
 export async function subirPresupuestoADrive({ buffer, numero, año }: { buffer: Buffer; numero: string; año: string }): Promise<{ driveFileId: string }> {
   const drive = getDriveClient()
-  const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!
+  const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!.trim()
   const carpetaPresupuestos = await obtenerOCrearCarpeta(drive, 'Presupuestos', rootFolderId)
   const carpetaAño = await obtenerOCrearCarpeta(drive, año, carpetaPresupuestos)
   const driveFileId = await subirPDF({ buffer, nombre: numero, carpetaId: carpetaAño })
