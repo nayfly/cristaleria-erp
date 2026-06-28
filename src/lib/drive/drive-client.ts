@@ -2,11 +2,9 @@ import { google } from 'googleapis'
 import { Readable } from 'stream'
 
 function getDriveClient() {
+  const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!)
   const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      private_key: (process.env.GOOGLE_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
-    },
+    credentials,
     scopes: ['https://www.googleapis.com/auth/drive'],
   })
   return google.drive({ version: 'v3', auth })

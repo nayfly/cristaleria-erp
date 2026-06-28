@@ -9,20 +9,17 @@ import React from 'react'
 export async function GET() {
   try {
     const { google } = await import('googleapis')
+    const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!)
     const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: (process.env.GOOGLE_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
-      },
+      credentials,
       scopes: ['https://www.googleapis.com/auth/drive'],
     })
     const drive = google.drive({ version: 'v3', auth })
     const { data } = await drive.files.list({ pageSize: 1, fields: 'files(id,name)' })
     return NextResponse.json({
       ok: true,
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
+      client_email: credentials.client_email,
       folder_id: process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID,
-      key_length: process.env.GOOGLE_PRIVATE_KEY?.length,
       files: data.files,
     })
   } catch (e: any) {
