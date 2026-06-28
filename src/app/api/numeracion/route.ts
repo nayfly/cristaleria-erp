@@ -14,15 +14,50 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'tipo debe ser factura o presupuesto' }, { status: 400 })
   }
 
-  // Usar admin client (service_role) para ejecutar la función sin restricciones de RLS
   const admin = createAdminClient()
-  const fn = tipo === 'factura' ? 'generar_numero_factura' : 'generar_numero_presupuesto'
-  const { data, error } = await admin.rpc(fn)
 
-  if (error || !data) {
-    console.error(`Error generando número de ${tipo}:`, error)
-    return NextResponse.json({ error: error?.message ?? 'Error interno' }, { status: 500 })
+  // Leer configuración actual
+  const { data: config, error: readError } = await admin
+    .from('configuracion_empresa')
+    .select('id, serie_facturas, siguiente_num_factura, serie_presupuestos, siguiente_num_presupuesto')
+    .single()
+
+  if (readError || !config) {
+    console.error('Error leyendo configuracion_empresa:', readError)
+    return NextResponse.json({ error: 'No se pudo leer la configuración' }, { status: 500 })
   }
 
-  return NextResponse.json({ numero: data })
+  if (tipo === 'factura') {
+    const num = config.siguiente_num_factura ?? 1
+    const serie = config.serie_facturas ?? 'F'
+    const numero = `${serie}${String(num).padStart(5, '0')}`
+
+    const { error: updateError } = await admin
+      .from('configuracion_empresa')
+      .update({ siguiente_num_factura: num + 1 })
+      .eq('id', config.id)
+
+    if (updateError) {
+      console.error('Error actualizando num factura:', updateError)
+      return NextResponse.json({ error: updateError.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ numero })
+  } else {
+    const num = config.siguiente_num_presupuesto ?? 1
+    const serie = config.serie_presupuestos ?? 'P'
+    const numero = `${serie}${String(num).padStart(5, '0')}`
+
+    const { error: updateError } = await admin
+      .from('configuracion_empresa')
+      .update({ siguiente_num_presupuesto: num + 1 })
+      .eq('id', config.id)
+
+    if (updateError) {
+      console.error('Error actualizando num presupuesto:', updateError)
+      return NextResponse.json({ error: updateError.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ numero })
+  }
 }
