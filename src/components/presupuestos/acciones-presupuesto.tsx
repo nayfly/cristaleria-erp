@@ -16,16 +16,12 @@ export function AccionesPresupuesto({ presupuesto }: AccionesPresupuestoProps) {
   const router = useRouter()
   const supabase = createClient()
   const [menuAbierto, setMenuAbierto] = useState(false)
-  const [generandoPDF, setGenerandoPDF] = useState(false)
+  const [cargando, setCargando] = useState(false)
 
   const cliente = (presupuesto as any).cliente
 
   async function cambiarEstado(nuevoEstado: string) {
-    const { error } = await supabase
-      .from('presupuestos')
-      .update({ estado: nuevoEstado })
-      .eq('id', presupuesto.id)
-
+    const { error } = await supabase.from('presupuestos').update({ estado: nuevoEstado }).eq('id', presupuesto.id)
     if (error) { toast.error('Error al actualizar el estado'); return }
     toast.success(`Presupuesto marcado como ${nuevoEstado}`)
     router.refresh()
@@ -34,29 +30,23 @@ export function AccionesPresupuesto({ presupuesto }: AccionesPresupuestoProps) {
   async function convertirAFactura() {
     const { data, error } = await supabase
       .rpc('convertir_presupuesto_a_factura', { p_presupuesto_id: presupuesto.id })
-
     if (error || !data) { toast.error('Error al convertir en factura'); return }
     toast.success('Factura creada correctamente')
     router.push(`/facturas/${data}`)
   }
 
-  async function obtenerPDFBlob(): Promise<Blob | null> {
-    const res = await fetch('/api/pdf/presupuesto', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ presupuestoId: presupuesto.id }),
-    })
-    if (!res.ok) return null
-    return res.blob()
-  }
-
-  async function generarPDF() {
+  async function descargarPDF() {
     setMenuAbierto(false)
-    setGenerandoPDF(true)
+    setCargando(true)
     const toastId = toast.loading('Generando PDF...')
     try {
-      const blob = await obtenerPDFBlob()
-      if (!blob) throw new Error()
+      const res = await fetch('/api/pdf/presupuesto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ presupuestoId: presupuesto.id }),
+      })
+      if (!res.ok) throw new Error()
+      const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -69,32 +59,30 @@ export function AccionesPresupuesto({ presupuesto }: AccionesPresupuestoProps) {
       toast.dismiss(toastId)
       toast.error('Error al generar el PDF')
     } finally {
-      setGenerandoPDF(false)
+      setCargando(false)
     }
+  }
+
+  async function obtenerURLPublica(): Promise<string | null> {
+    const res = await fetch(`/api/pdf/presupuesto?id=${presupuesto.id}`)
+    if (!res.ok) return null
+    const json = await res.json()
+    return json.url ?? null
   }
 
   async function compartirPorWhatsApp() {
     setMenuAbierto(false)
-    setGenerandoPDF(true)
-    const toastId = toast.loading('Preparando para compartir...')
+    setCargando(true)
+    const toastId = toast.loading('Generando PDF...')
     try {
-      const blob = await obtenerPDFBlob()
-      if (!blob) throw new Error()
-
-      // Descargar PDF
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${presupuesto.numero}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      const url = await obtenerURLPublica()
+      if (!url) throw new Error()
 
       toast.dismiss(toastId)
-      toast.success('PDF descargado — adjúntalo en WhatsApp')
 
       const nombreCliente = cliente?.empresa ?? cliente?.nombre ?? ''
       const mensaje = encodeURIComponent(
-        `Hola${nombreCliente ? ` ${nombreCliente}` : ''},\n\nLe adjunto el presupuesto *${presupuesto.numero}* por importe de *${formatCurrency(presupuesto.total)}*.\n\nQuedamos a su disposición para cualquier consulta.`
+        `Hola${nombreCliente ? ` ${nombreCliente}` : ''},\n\nLe adjunto el presupuesto *${presupuesto.numero}* por importe de *${formatCurrency(presupuesto.total)}*.\n\n📄 Descargar PDF: ${url}\n\nQuedamos a su disposición para cualquier consulta.`
       )
 
       const telefono = cliente?.telefono?.replace(/\D/g, '')
@@ -102,49 +90,38 @@ export function AccionesPresupuesto({ presupuesto }: AccionesPresupuestoProps) {
         ? `https://wa.me/${telefono.startsWith('34') ? telefono : '34' + telefono}?text=${mensaje}`
         : `https://wa.me/?text=${mensaje}`
 
-      setTimeout(() => window.open(waUrl, '_blank'), 500)
+      window.open(waUrl, '_blank')
     } catch {
       toast.dismiss(toastId)
       toast.error('Error al generar el PDF')
     } finally {
-      setGenerandoPDF(false)
+      setCargando(false)
     }
   }
 
   async function compartirPorEmail() {
     setMenuAbierto(false)
-    setGenerandoPDF(true)
-    const toastId = toast.loading('Preparando para compartir...')
+    setCargando(true)
+    const toastId = toast.loading('Generando PDF...')
     try {
-      const blob = await obtenerPDFBlob()
-      if (!blob) throw new Error()
-
-      // Descargar PDF
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${presupuesto.numero}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      const url = await obtenerURLPublica()
+      if (!url) throw new Error()
 
       toast.dismiss(toastId)
-      toast.success('PDF descargado — adjúntalo en el correo')
 
       const nombreCliente = cliente?.empresa ?? cliente?.nombre ?? ''
       const asunto = encodeURIComponent(`Presupuesto ${presupuesto.numero}`)
       const cuerpo = encodeURIComponent(
-        `Estimado/a ${nombreCliente},\n\nLe adjuntamos el presupuesto ${presupuesto.numero} por importe de ${formatCurrency(presupuesto.total)}.\n\nQuedamos a su disposición para cualquier consulta.\n\nUn saludo.`
+        `Estimado/a ${nombreCliente},\n\nLe enviamos el presupuesto ${presupuesto.numero} por importe de ${formatCurrency(presupuesto.total)}.\n\nPuede descargarlo aquí:\n${url}\n\nQuedamos a su disposición para cualquier consulta.\n\nUn saludo.`
       )
       const emailCliente = cliente?.email ?? ''
 
-      setTimeout(() => {
-        window.location.href = `mailto:${emailCliente}?subject=${asunto}&body=${cuerpo}`
-      }, 500)
+      window.location.href = `mailto:${emailCliente}?subject=${asunto}&body=${cuerpo}`
     } catch {
       toast.dismiss(toastId)
       toast.error('Error al generar el PDF')
     } finally {
-      setGenerandoPDF(false)
+      setCargando(false)
     }
   }
 
@@ -168,8 +145,8 @@ export function AccionesPresupuesto({ presupuesto }: AccionesPresupuestoProps) {
     acciones.push({ label: '✓ Convertir en factura', onClick: convertirAFactura, highlight: true })
   }
 
-  acciones.push({ label: 'Descargar PDF', icono: <Download className="w-3.5 h-3.5" />, onClick: generarPDF, separador: true })
-  acciones.push({ label: 'Compartir por WhatsApp', icono: <MessageCircle className="w-3.5 h-3.5 text-green-600" />, onClick: compartirPorWhatsApp })
+  acciones.push({ label: 'Descargar PDF', icono: <Download className="w-3.5 h-3.5" />, onClick: descargarPDF, separador: true })
+  acciones.push({ label: 'Enviar por WhatsApp', icono: <MessageCircle className="w-3.5 h-3.5 text-green-600" />, onClick: compartirPorWhatsApp })
   acciones.push({ label: 'Enviar por email', icono: <Mail className="w-3.5 h-3.5 text-blue-500" />, onClick: compartirPorEmail })
 
   if (acciones.length === 0) return null
@@ -178,7 +155,7 @@ export function AccionesPresupuesto({ presupuesto }: AccionesPresupuestoProps) {
     <div className="relative">
       <button
         onClick={() => setMenuAbierto(!menuAbierto)}
-        disabled={generandoPDF}
+        disabled={cargando}
         className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
                    text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors
                    disabled:opacity-60 disabled:cursor-wait"
@@ -196,10 +173,7 @@ export function AccionesPresupuesto({ presupuesto }: AccionesPresupuestoProps) {
               <div key={i}>
                 {accion.separador && i > 0 && <div className="border-t border-slate-100 my-1" />}
                 <button
-                  onClick={() => {
-                    setMenuAbierto(false)
-                    accion.onClick()
-                  }}
+                  onClick={() => { setMenuAbierto(false); accion.onClick() }}
                   className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
                     accion.danger
                       ? 'text-red-600 hover:bg-red-50'
