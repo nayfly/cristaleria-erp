@@ -4,12 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Download, Send, MessageCircle, Mail } from 'lucide-react'
 import { format } from 'date-fns'
+import { formatCurrency } from '@/lib/utils'
 import type { Factura } from '@/types'
 
 interface AccionesFacturaProps {
-  factura: Factura
+  factura: Factura & { cliente?: { nombre: string; empresa?: string; telefono?: string; email?: string } }
 }
 
 export function AccionesFactura({ factura }: AccionesFacturaProps) {
@@ -20,6 +21,9 @@ export function AccionesFactura({ factura }: AccionesFacturaProps) {
   const [formaPago, setFormaPago] = useState<string>(factura.forma_pago ?? 'transferencia')
   const [fechaCobro, setFechaCobro] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [guardando, setGuardando] = useState(false)
+  const [generandoPDF, setGenerandoPDF] = useState(false)
+
+  const cliente = (factura as any).cliente
 
   async function marcarComoEnviada() {
     const { error } = await supabase
@@ -59,17 +63,23 @@ export function AccionesFactura({ factura }: AccionesFacturaProps) {
     router.refresh()
   }
 
+  async function obtenerPDFBlob(): Promise<Blob | null> {
+    const res = await fetch('/api/pdf/factura', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ facturaId: factura.id }),
+    })
+    if (!res.ok) return null
+    return res.blob()
+  }
+
   async function generarPDF() {
     setMenuAbierto(false)
+    setGenerandoPDF(true)
     const toastId = toast.loading('Generando PDF...')
     try {
-      const res = await fetch('/api/pdf/factura', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ facturaId: factura.id }),
-      })
-      if (!res.ok) throw new Error()
-      const blob = await res.blob()
+      const blob = await obtenerPDFBlob()
+      if (!blob) throw new Error()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -81,15 +91,96 @@ export function AccionesFactura({ factura }: AccionesFacturaProps) {
     } catch {
       toast.dismiss(toastId)
       toast.error('Error al generar el PDF')
+    } finally {
+      setGenerandoPDF(false)
     }
   }
 
-  // Construir lista de acciones según estado
+  async function compartirPorWhatsApp() {
+    setMenuAbierto(false)
+    // Primero descargamos el PDF
+    setGenerandoPDF(true)
+    const toastId = toast.loading('Preparando para compartir...')
+    try {
+      const blob = await obtenerPDFBlob()
+      if (!blob) throw new Error()
+
+      // Descargar PDF
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${factura.numero}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+
+      toast.dismiss(toastId)
+      toast.success('PDF descargado — adjúntalo en WhatsApp')
+
+      // Construir mensaje de WhatsApp
+      const nombreCliente = cliente?.empresa ?? cliente?.nombre ?? ''
+      const mensaje = encodeURIComponent(
+        `Hola${nombreCliente ? ` ${nombreCliente}` : ''},\n\nLe adjunto la factura *${factura.numero}* por importe de *${formatCurrency(factura.total)}*.\n\nQuedamos a su disposición para cualquier consulta.`
+      )
+
+      // Si tenemos teléfono del cliente, abrir chat directo; si no, el selector
+      const telefono = cliente?.telefono?.replace(/\D/g, '')
+      const waUrl = telefono
+        ? `https://wa.me/${telefono.startsWith('34') ? telefono : '34' + telefono}?text=${mensaje}`
+        : `https://wa.me/?text=${mensaje}`
+
+      setTimeout(() => window.open(waUrl, '_blank'), 500)
+    } catch {
+      toast.dismiss(toastId)
+      toast.error('Error al generar el PDF')
+    } finally {
+      setGenerandoPDF(false)
+    }
+  }
+
+  async function compartirPorEmail() {
+    setMenuAbierto(false)
+    setGenerandoPDF(true)
+    const toastId = toast.loading('Preparando para compartir...')
+    try {
+      const blob = await obtenerPDFBlob()
+      if (!blob) throw new Error()
+
+      // Descargar PDF
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${factura.numero}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+
+      toast.dismiss(toastId)
+      toast.success('PDF descargado — adjúntalo en el correo')
+
+      const nombreCliente = cliente?.empresa ?? cliente?.nombre ?? ''
+      const asunto = encodeURIComponent(`Factura ${factura.numero}`)
+      const cuerpo = encodeURIComponent(
+        `Estimado/a ${nombreCliente},\n\nLe adjuntamos la factura ${factura.numero} por importe de ${formatCurrency(factura.total)}.\n\nQuedamos a su disposición para cualquier consulta.\n\nUn saludo.`
+      )
+      const emailCliente = cliente?.email ?? ''
+
+      setTimeout(() => {
+        window.location.href = `mailto:${emailCliente}?subject=${asunto}&body=${cuerpo}`
+      }, 500)
+    } catch {
+      toast.dismiss(toastId)
+      toast.error('Error al generar el PDF')
+    } finally {
+      setGenerandoPDF(false)
+    }
+  }
+
   const acciones: Array<{
     label: string
+    icono?: React.ReactNode
     onClick: () => void
     danger?: boolean
     highlight?: boolean
+    separador?: boolean
   }> = []
 
   if (factura.estado === 'emitida') {
@@ -104,13 +195,16 @@ export function AccionesFactura({ factura }: AccionesFacturaProps) {
     })
   }
 
-  acciones.push({ label: 'Descargar PDF', onClick: generarPDF })
+  acciones.push({ label: 'Descargar PDF', icono: <Download className="w-3.5 h-3.5" />, onClick: generarPDF, separador: true })
+  acciones.push({ label: 'Compartir por WhatsApp', icono: <MessageCircle className="w-3.5 h-3.5 text-green-600" />, onClick: compartirPorWhatsApp })
+  acciones.push({ label: 'Enviar por email', icono: <Mail className="w-3.5 h-3.5 text-blue-500" />, onClick: compartirPorEmail })
 
   if (factura.estado !== 'anulada' && factura.estado !== 'cobrada') {
     acciones.push({
       label: 'Anular factura',
       onClick: () => { setMenuAbierto(false); anularFactura() },
       danger: true,
+      separador: true,
     })
   }
 
@@ -121,8 +215,10 @@ export function AccionesFactura({ factura }: AccionesFacturaProps) {
       <div className="relative">
         <button
           onClick={() => setMenuAbierto(!menuAbierto)}
+          disabled={generandoPDF}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
-                     text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                     text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors
+                     disabled:opacity-60 disabled:cursor-wait"
         >
           Acciones
           <ChevronDown className="w-3.5 h-3.5" />
@@ -131,22 +227,25 @@ export function AccionesFactura({ factura }: AccionesFacturaProps) {
         {menuAbierto && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenuAbierto(false)} />
-            <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200
+            <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-slate-200
                             rounded-xl shadow-lg z-50 overflow-hidden py-1">
               {acciones.map((accion, i) => (
-                <button
-                  key={i}
-                  onClick={accion.onClick}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-                    accion.danger
-                      ? 'text-red-600 hover:bg-red-50'
-                      : accion.highlight
-                      ? 'text-blue-700 font-semibold hover:bg-blue-50'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {accion.label}
-                </button>
+                <div key={i}>
+                  {accion.separador && i > 0 && <div className="border-t border-slate-100 my-1" />}
+                  <button
+                    onClick={accion.onClick}
+                    className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
+                      accion.danger
+                        ? 'text-red-600 hover:bg-red-50'
+                        : accion.highlight
+                        ? 'text-blue-700 font-semibold hover:bg-blue-50'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {accion.icono}
+                    {accion.label}
+                  </button>
+                </div>
               ))}
             </div>
           </>

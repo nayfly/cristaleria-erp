@@ -67,9 +67,7 @@ export default async function PresupuestoDetallePage({ params }: Props) {
               Editar
             </Link>
           )}
-          <AccionesPresupuesto
-            presupuesto={presupuesto as any}
-          />
+          <AccionesPresupuesto presupuesto={{ ...presupuesto, cliente } as any} />
         </div>
       </div>
 

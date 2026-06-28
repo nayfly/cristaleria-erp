@@ -71,7 +71,7 @@ export default async function FacturaDetallePage({ params }: Props) {
               Editar
             </Link>
           )}
-          <AccionesFactura factura={factura as any} />
+          <AccionesFactura factura={{ ...factura, cliente } as any} />
         </div>
       </div>
 
