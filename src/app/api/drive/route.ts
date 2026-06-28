@@ -71,7 +71,6 @@ export async function POST(req: NextRequest) {
       const { driveFileId } = await subirFacturaADrive({
         buffer,
         numero: factura.numero,
-        nombreCliente,
         año,
       })
 
@@ -108,7 +107,6 @@ export async function POST(req: NextRequest) {
       const { driveFileId } = await subirPresupuestoADrive({
         buffer,
         numero: presupuesto.numero,
-        nombreCliente,
         año,
       })
 

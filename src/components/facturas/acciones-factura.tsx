@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { ChevronDown, Download, MessageCircle, Mail } from 'lucide-react'
+import { ChevronDown, Download, MessageCircle, Mail, FolderUp } from 'lucide-react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/utils'
 import type { Factura } from '@/types'
@@ -75,6 +75,27 @@ export function AccionesFactura({ factura }: AccionesFacturaProps) {
     } catch {
       toast.dismiss(toastId)
       toast.error('Error al generar el PDF')
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  async function guardarEnDrive() {
+    setMenuAbierto(false)
+    setCargando(true)
+    const toastId = toast.loading('Subiendo a Google Drive...')
+    try {
+      const res = await fetch('/api/drive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'factura', id: factura.id }),
+      })
+      if (!res.ok) throw new Error()
+      toast.dismiss(toastId)
+      toast.success('Factura guardada en Google Drive')
+    } catch {
+      toast.dismiss(toastId)
+      toast.error('Error al subir a Google Drive')
     } finally {
       setCargando(false)
     }
@@ -165,6 +186,7 @@ export function AccionesFactura({ factura }: AccionesFacturaProps) {
   acciones.push({ label: 'Descargar PDF', icono: <Download className="w-3.5 h-3.5" />, onClick: descargarPDF, separador: true })
   acciones.push({ label: 'Enviar por WhatsApp', icono: <MessageCircle className="w-3.5 h-3.5 text-green-600" />, onClick: compartirPorWhatsApp })
   acciones.push({ label: 'Enviar por email', icono: <Mail className="w-3.5 h-3.5 text-blue-500" />, onClick: compartirPorEmail })
+  acciones.push({ label: 'Guardar en Drive', icono: <FolderUp className="w-3.5 h-3.5 text-yellow-500" />, onClick: guardarEnDrive })
 
   if (factura.estado !== 'anulada' && factura.estado !== 'cobrada') {
     acciones.push({
