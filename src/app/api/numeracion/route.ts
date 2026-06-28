@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   if (tipo === 'factura') {
     const num = config.siguiente_num_factura ?? 1
     const serie = (config.serie_facturas ?? 'F').trim()
-    const numero = `${serie}${String(num).padStart(5, '0')}`
+    const numero = `${serie}/${num}`
 
     const { error: updateError } = await admin
       .from('configuracion_empresa')
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   } else {
     const num = config.siguiente_num_presupuesto ?? 1
     const serie = (config.serie_presupuestos ?? 'P').trim()
-    const numero = `${serie}${String(num).padStart(5, '0')}`
+    const numero = `${serie}/${num}`
 
     const { error: updateError } = await admin
       .from('configuracion_empresa')
