@@ -70,40 +70,44 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 fade-in">
-      {/* Título + acciones rápidas */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Resumen de facturación</p>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            href="/clientes/nuevo"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
-                       text-slate-700 bg-white border border-slate-200 rounded-lg
-                       hover:bg-slate-50 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Cliente
-          </Link>
-          <Link
-            href="/presupuestos/nuevo"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
-                       text-slate-700 bg-white border border-slate-200 rounded-lg
-                       hover:bg-slate-50 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Presupuesto
-          </Link>
-          <Link
-            href="/facturas/nueva"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
-                       text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Factura
-          </Link>
-        </div>
+      {/* Título */}
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Resumen de facturación</p>
+      </div>
+
+      {/* Acciones rápidas — fila en escritorio, cuadrícula grande en móvil */}
+      <div className="grid grid-cols-3 md:flex md:flex-row gap-2">
+        <Link
+          href="/clientes/nuevo"
+          className="flex flex-col md:flex-row items-center justify-center gap-1.5
+                     px-3 py-4 md:py-1.5 text-sm font-medium rounded-xl md:rounded-lg
+                     text-slate-700 bg-white border border-slate-200
+                     hover:bg-slate-50 transition-colors"
+        >
+          <Plus className="w-5 h-5 md:w-3.5 md:h-3.5" />
+          <span>Cliente</span>
+        </Link>
+        <Link
+          href="/presupuestos/nuevo"
+          className="flex flex-col md:flex-row items-center justify-center gap-1.5
+                     px-3 py-4 md:py-1.5 text-sm font-medium rounded-xl md:rounded-lg
+                     text-slate-700 bg-white border border-slate-200
+                     hover:bg-slate-50 transition-colors"
+        >
+          <Plus className="w-5 h-5 md:w-3.5 md:h-3.5" />
+          <span>Presupuesto</span>
+        </Link>
+        <Link
+          href="/facturas/nueva"
+          className="flex flex-col md:flex-row items-center justify-center gap-1.5
+                     px-3 py-4 md:py-1.5 text-sm font-medium rounded-xl md:rounded-lg
+                     text-white bg-blue-600
+                     hover:bg-blue-700 transition-colors"
+        >
+          <Plus className="w-5 h-5 md:w-3.5 md:h-3.5" />
+          <span>Factura</span>
+        </Link>
       </div>
 
       {/* Tarjetas métricas */}
