@@ -279,7 +279,7 @@ export function LineasItems({ productos = [] }: LineasItemsProps) {
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setModalAbierto(false)} />
           <div className="relative bg-white w-full md:max-w-md md:rounded-2xl rounded-t-2xl
-                          shadow-xl flex flex-col max-h-[70vh]">
+                          shadow-xl flex flex-col h-[70vh]">
             {/* Cabecera modal */}
             <div className="flex items-center justify-between p-4 border-b border-slate-100">
               <h3 className="text-base font-semibold text-slate-900">Seleccionar producto</h3>
@@ -308,7 +308,7 @@ export function LineasItems({ productos = [] }: LineasItemsProps) {
             </div>
 
             {/* Lista productos */}
-            <div className="overflow-y-auto flex-1">
+            <div className="overflow-y-auto flex-1 min-h-0">
               {productosFiltrados.length === 0 ? (
                 <p className="text-sm text-slate-400 text-center py-10">
                   {busqueda ? 'No se encontraron productos' : 'No hay productos en el catálogo'}
