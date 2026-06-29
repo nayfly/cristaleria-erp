@@ -10,12 +10,16 @@ function getDriveClient() {
   return google.drive({ version: 'v3', auth })
 }
 
+const SHARED = {
+  supportsAllDrives: true,
+  includeItemsFromAllDrives: true,
+}
+
 async function obtenerOCrearCarpeta(drive: any, nombre: string, padreId: string): Promise<string> {
   const { data } = await drive.files.list({
     q: `name='${nombre}' and mimeType='application/vnd.google-apps.folder' and '${padreId}' in parents and trashed=false`,
     fields: 'files(id)',
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
+    ...SHARED,
   })
   if (data.files?.length > 0) return data.files[0].id
 
@@ -26,7 +30,7 @@ async function obtenerOCrearCarpeta(drive: any, nombre: string, padreId: string)
       parents: [padreId],
     },
     fields: 'id',
-    supportsAllDrives: true,
+    ...SHARED,
   })
   return carpeta.id
 }
@@ -35,11 +39,11 @@ async function subirPDF({ buffer, nombre, carpetaId }: { buffer: Buffer; nombre:
   const drive = getDriveClient()
   const stream = Readable.from(buffer)
 
+  // Buscar si ya existe para actualizar en vez de duplicar
   const { data: existing } = await drive.files.list({
     q: `name='${nombre}.pdf' and '${carpetaId}' in parents and trashed=false`,
     fields: 'files(id)',
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
+    ...SHARED,
   })
 
   if (existing.files?.length > 0) {
@@ -47,16 +51,19 @@ async function subirPDF({ buffer, nombre, carpetaId }: { buffer: Buffer; nombre:
       fileId: existing.files[0].id,
       media: { mimeType: 'application/pdf', body: stream },
       fields: 'id',
-      supportsAllDrives: true,
+      ...SHARED,
     })
     return data.id!
   }
 
   const { data } = await drive.files.create({
-    requestBody: { name: `${nombre}.pdf`, parents: [carpetaId] },
+    requestBody: {
+      name: `${nombre}.pdf`,
+      parents: [carpetaId],
+    },
     media: { mimeType: 'application/pdf', body: stream },
     fields: 'id',
-    supportsAllDrives: true,
+    ...SHARED,
   })
   return data.id!
 }
