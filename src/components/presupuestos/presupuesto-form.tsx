@@ -167,6 +167,12 @@ export function PresupuestoForm({ presupuesto, clientes, condicionesDefault = ''
 
       toast.success('Presupuesto creado')
       router.push(`/presupuestos/${nuevo.id}`)
+      // Subir a Drive en segundo plano (silencioso si no está conectado)
+      fetch('/api/drive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'presupuesto', id: nuevo.id }),
+      }).catch(() => {})
     }
   }
 

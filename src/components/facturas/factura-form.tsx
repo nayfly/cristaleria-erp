@@ -169,6 +169,12 @@ export function FacturaForm({ factura, clientes, productos = [] }: FacturaFormPr
 
       toast.success('Factura creada')
       router.push(`/facturas/${nueva.id}`)
+      // Subir a Drive en segundo plano (silencioso si no está conectado)
+      fetch('/api/drive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'factura', id: nueva.id }),
+      }).catch(() => {})
     }
   }
 
