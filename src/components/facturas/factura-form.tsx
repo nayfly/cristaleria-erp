@@ -9,14 +9,15 @@ import { calcularTotales, tempId } from '@/lib/utils'
 import { LineasItems } from '@/components/shared/lineas-items'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
-import type { Cliente, Factura } from '@/types'
+import type { Cliente, Factura, Producto } from '@/types'
 
 interface FacturaFormProps {
   factura?: Factura
   clientes: Cliente[]
+  productos?: Producto[]
 }
 
-export function FacturaForm({ factura, clientes }: FacturaFormProps) {
+export function FacturaForm({ factura, clientes, productos = [] }: FacturaFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const clienteIdPrefill = searchParams.get('cliente') ?? ''
@@ -215,7 +216,7 @@ export function FacturaForm({ factura, clientes }: FacturaFormProps) {
         {/* Líneas */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
           <h2 className="text-sm font-semibold text-slate-900">Líneas</h2>
-          <LineasItems />
+          <LineasItems productos={productos} />
         </div>
 
         {/* Importes */}

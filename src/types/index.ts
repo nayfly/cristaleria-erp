@@ -207,6 +207,26 @@ export type FacturaInsert = Omit<
 >
 
 // ============================================
+// PRODUCTOS
+// ============================================
+
+export interface Producto {
+  id: string
+  nombre: string
+  descripcion?: string | null
+  referencia?: string | null
+  precio_base: number
+  tipo_iva: number
+  unidad: string
+  activo: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type ProductoInsert = Omit<Producto, 'id' | 'created_at' | 'updated_at'>
+export type ProductoUpdate = Partial<ProductoInsert>
+
+// ============================================
 // BÚSQUEDA GLOBAL
 // ============================================
 

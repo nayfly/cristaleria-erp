@@ -9,15 +9,16 @@ import { calcularTotales, tempId } from '@/lib/utils'
 import { LineasItems } from '@/components/shared/lineas-items'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
-import type { Cliente, Presupuesto } from '@/types'
+import type { Cliente, Presupuesto, Producto } from '@/types'
 
 interface PresupuestoFormProps {
   presupuesto?: Presupuesto
   clientes: Cliente[]
   condicionesDefault?: string
+  productos?: Producto[]
 }
 
-export function PresupuestoForm({ presupuesto, clientes, condicionesDefault = '' }: PresupuestoFormProps) {
+export function PresupuestoForm({ presupuesto, clientes, condicionesDefault = '', productos = [] }: PresupuestoFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const clienteIdPrefill = searchParams.get('cliente') ?? ''
@@ -216,7 +217,7 @@ export function PresupuestoForm({ presupuesto, clientes, condicionesDefault = ''
         {/* Líneas */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
           <h2 className="text-sm font-semibold text-slate-900">Líneas</h2>
-          <LineasItems />
+          <LineasItems productos={productos} />
         </div>
 
         {/* Configuración fiscal */}
