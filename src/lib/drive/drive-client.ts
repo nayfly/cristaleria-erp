@@ -10,78 +10,40 @@ function getDriveClient() {
   return google.drive({ version: 'v3', auth })
 }
 
-const SHARED = {
-  supportsAllDrives: true,
-  includeItemsFromAllDrives: true,
-}
-
-async function obtenerOCrearCarpeta(drive: any, nombre: string, padreId: string): Promise<string> {
-  const { data } = await drive.files.list({
-    q: `name='${nombre}' and mimeType='application/vnd.google-apps.folder' and '${padreId}' in parents and trashed=false`,
-    fields: 'files(id)',
-    ...SHARED,
-  })
-  if (data.files?.length > 0) return data.files[0].id
-
-  const { data: carpeta } = await drive.files.create({
-    requestBody: {
-      name: nombre,
-      mimeType: 'application/vnd.google-apps.folder',
-      parents: [padreId],
-    },
-    fields: 'id',
-    ...SHARED,
-  })
-  return carpeta.id
-}
-
-async function subirPDF({ buffer, nombre, carpetaId }: { buffer: Buffer; nombre: string; carpetaId: string }): Promise<string> {
-  const drive = getDriveClient()
-  const stream = Readable.from(buffer)
-
-  // Buscar si ya existe para actualizar en vez de duplicar
-  const { data: existing } = await drive.files.list({
-    q: `name='${nombre}.pdf' and '${carpetaId}' in parents and trashed=false`,
-    fields: 'files(id)',
-    ...SHARED,
-  })
-
-  if (existing.files?.length > 0) {
-    const { data } = await drive.files.update({
-      fileId: existing.files[0].id,
-      media: { mimeType: 'application/pdf', body: stream },
-      fields: 'id',
-      ...SHARED,
-    })
-    return data.id!
-  }
-
-  const { data } = await drive.files.create({
-    requestBody: {
-      name: `${nombre}.pdf`,
-      parents: [carpetaId],
-    },
-    media: { mimeType: 'application/pdf', body: stream },
-    fields: 'id',
-    ...SHARED,
-  })
-  return data.id!
-}
-
 export async function subirFacturaADrive({ buffer, numero, año }: { buffer: Buffer; numero: string; año: string }): Promise<{ driveFileId: string }> {
   const drive = getDriveClient()
   const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!.trim()
-  const carpetaFacturas = await obtenerOCrearCarpeta(drive, 'Facturas', rootFolderId)
-  const carpetaAño = await obtenerOCrearCarpeta(drive, año, carpetaFacturas)
-  const driveFileId = await subirPDF({ buffer, nombre: numero, carpetaId: carpetaAño })
-  return { driveFileId }
+  const nombre = `Factura-${numero}-${año}.pdf`
+  const stream = Readable.from(buffer)
+
+  const { data } = await drive.files.create({
+    requestBody: {
+      name: nombre,
+      parents: [rootFolderId],
+    },
+    media: { mimeType: 'application/pdf', body: stream },
+    fields: 'id',
+    supportsAllDrives: true,
+  })
+
+  return { driveFileId: data.id! }
 }
 
 export async function subirPresupuestoADrive({ buffer, numero, año }: { buffer: Buffer; numero: string; año: string }): Promise<{ driveFileId: string }> {
   const drive = getDriveClient()
   const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!.trim()
-  const carpetaPresupuestos = await obtenerOCrearCarpeta(drive, 'Presupuestos', rootFolderId)
-  const carpetaAño = await obtenerOCrearCarpeta(drive, año, carpetaPresupuestos)
-  const driveFileId = await subirPDF({ buffer, nombre: numero, carpetaId: carpetaAño })
-  return { driveFileId }
+  const nombre = `Presupuesto-${numero}-${año}.pdf`
+  const stream = Readable.from(buffer)
+
+  const { data } = await drive.files.create({
+    requestBody: {
+      name: nombre,
+      parents: [rootFolderId],
+    },
+    media: { mimeType: 'application/pdf', body: stream },
+    fields: 'id',
+    supportsAllDrives: true,
+  })
+
+  return { driveFileId: data.id! }
 }
