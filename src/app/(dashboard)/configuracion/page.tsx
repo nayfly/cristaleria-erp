@@ -1,5 +1,7 @@
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { ConfiguracionForm } from '@/components/configuracion/configuracion-form'
+import { GoogleDriveCard } from '@/components/configuracion/google-drive-card'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Configuración' }
@@ -12,6 +14,8 @@ export default async function ConfiguracionPage() {
     .select('*')
     .single()
 
+  const driveConectado = !!(config as any)?.google_drive_refresh_token
+
   return (
     <div className="space-y-5 fade-in max-w-2xl">
       <div>
@@ -22,6 +26,10 @@ export default async function ConfiguracionPage() {
       </div>
 
       <ConfiguracionForm config={config as any} />
+
+      <Suspense fallback={null}>
+        <GoogleDriveCard conectado={driveConectado} />
+      </Suspense>
     </div>
   )
 }
