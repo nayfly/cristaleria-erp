@@ -7,10 +7,20 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: {
-    default: 'CristaleriaERP',
-    template: '%s | CristaleriaERP',
+    default: 'Cristalería Torrox',
+    template: '%s | Cristalería Torrox',
   },
-  description: 'Sistema de gestión para cristalería',
+  description: 'Gestión de facturas y presupuestos',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Cristalería',
+  },
+  icons: {
+    icon: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
+  },
   robots: {
     index: false,
     follow: false,
