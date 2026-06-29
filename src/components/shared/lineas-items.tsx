@@ -236,18 +236,16 @@ export function LineasItems({ productos = [] }: LineasItemsProps) {
           Añadir línea
         </button>
 
-        {productos.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setModalAbierto(true)}
-            className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-200
-                       rounded-xl text-sm text-slate-400 hover:border-blue-300 hover:text-blue-500
-                       hover:bg-blue-50/50 transition-colors whitespace-nowrap"
-          >
-            <Package className="w-4 h-4" />
-            Del catálogo
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setModalAbierto(true)}
+          className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-200
+                     rounded-xl text-sm text-slate-400 hover:border-blue-300 hover:text-blue-500
+                     hover:bg-blue-50/50 transition-colors whitespace-nowrap"
+        >
+          <Package className="w-4 h-4" />
+          Del catálogo
+        </button>
       </div>
 
       {/* Totales */}
