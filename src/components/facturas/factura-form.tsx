@@ -1,6 +1,7 @@
 'use client'
 
-import { useForm, FormProvider } from 'react-hook-form'
+import { useForm, FormProvider, useWatch } from 'react-hook-form'
+import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -9,15 +10,19 @@ import { calcularTotales, tempId } from '@/lib/utils'
 import { LineasItems } from '@/components/shared/lineas-items'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
-import type { Cliente, Factura, Producto } from '@/types'
+import { Eye } from 'lucide-react'
+import { PreviewPDFModal } from '@/components/shared/preview-pdf-modal'
+import type { Cliente, Factura, Producto, ConfiguracionEmpresa } from '@/types'
 
 interface FacturaFormProps {
   factura?: Factura
   clientes: Cliente[]
   productos?: Producto[]
+  empresa?: ConfiguracionEmpresa
 }
 
-export function FacturaForm({ factura, clientes, productos = [] }: FacturaFormProps) {
+export function FacturaForm({ factura, clientes, productos = [], empresa }: FacturaFormProps) {
+  const [showPreview, setShowPreview] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const clienteIdPrefill = searchParams.get('cliente') ?? ''
@@ -298,6 +303,17 @@ export function FacturaForm({ factura, clientes, productos = [] }: FacturaFormPr
           >
             Cancelar
           </button>
+          {empresa && (
+            <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700
+                         bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              <Eye className="w-4 h-4" />
+              Vista previa
+            </button>
+          )}
           <button
             type="submit"
             disabled={isSubmitting}
@@ -308,6 +324,16 @@ export function FacturaForm({ factura, clientes, productos = [] }: FacturaFormPr
           </button>
         </div>
       </form>
+
+      {showPreview && empresa && (
+        <PreviewPDFModal
+          tipo="factura"
+          formValues={methods.getValues()}
+          clientes={clientes}
+          empresa={empresa}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
     </FormProvider>
   )
 }

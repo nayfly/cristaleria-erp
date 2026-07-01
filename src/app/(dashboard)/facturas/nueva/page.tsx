@@ -10,9 +10,10 @@ export const metadata: Metadata = { title: 'Nueva factura' }
 export default async function NuevaFacturaPage() {
   const supabase = await createClient()
 
-  const [{ data: clientes }, { data: productos }] = await Promise.all([
+  const [{ data: clientes }, { data: productos }, { data: empresa }] = await Promise.all([
     supabase.from('clientes').select('id, nombre, empresa').eq('activo', true).order('nombre'),
     supabase.from('productos').select('*').eq('activo', true).order('nombre'),
+    supabase.from('configuracion_empresa').select('*').single(),
   ])
 
   return (
@@ -32,7 +33,7 @@ export default async function NuevaFacturaPage() {
 
       {/* Suspense necesario porque FacturaForm usa useSearchParams */}
       <Suspense fallback={<div className="h-96 bg-white rounded-xl border border-slate-200 animate-pulse" />}>
-        <FacturaForm clientes={clientes as any ?? []} productos={productos as any ?? []} />
+        <FacturaForm clientes={clientes as any ?? []} productos={productos as any ?? []} empresa={empresa as any} />
       </Suspense>
     </div>
   )

@@ -10,13 +10,12 @@ export const metadata: Metadata = { title: 'Nuevo presupuesto' }
 export default async function NuevoPresupuestoPage() {
   const supabase = await createClient()
 
-  const [{ data: clientes }, { data: config }, { data: productos }] = await Promise.all([
+  const [{ data: clientes }, { data: empresa }, { data: productos }] = await Promise.all([
     supabase.from('clientes').select('id, nombre, empresa').eq('activo', true).order('nombre'),
-    supabase.from('configuracion_empresa').select('condiciones_presupuesto_default').single(),
+    supabase.from('configuracion_empresa').select('*').single(),
     supabase.from('productos').select('*').eq('activo', true).order('nombre'),
   ])
-
-  const condicionesDefault = (config as any)?.condiciones_presupuesto_default ?? ''
+  const condicionesDefault = (empresa as any)?.condiciones_presupuesto_default ?? ''
 
   return (
     <div className="space-y-5 fade-in max-w-4xl">
@@ -34,7 +33,7 @@ export default async function NuevoPresupuestoPage() {
       </div>
 
       <Suspense fallback={<div className="h-96 bg-white rounded-xl border border-slate-200 animate-pulse" />}>
-        <PresupuestoForm clientes={clientes as any ?? []} condicionesDefault={condicionesDefault} productos={productos as any ?? []} />
+        <PresupuestoForm clientes={clientes as any ?? []} condicionesDefault={condicionesDefault} productos={productos as any ?? []} empresa={empresa as any} />
       </Suspense>
     </div>
   )
