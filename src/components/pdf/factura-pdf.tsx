@@ -167,7 +167,9 @@ export function FacturaPDF({ factura, empresa }: FacturaPDFProps) {
         <View style={estilosBase.contenedorNota}>
           <View style={estilosBase.bloqueNota}>
             <Text style={estilosBase.etiquetaNota}>Please Note</Text>
-            {factura.observaciones ? (
+            {(factura as any).condiciones ? (
+              <Text style={estilosBase.textoNota}>{(factura as any).condiciones}</Text>
+            ) : factura.observaciones ? (
               <Text style={estilosBase.textoNota}>{factura.observaciones}</Text>
             ) : null}
           </View>

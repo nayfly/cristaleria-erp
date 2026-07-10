@@ -84,6 +84,7 @@ export const facturaSchema = z.object({
     .enum(['efectivo', 'transferencia', 'tarjeta', 'cheque', 'otro'])
     .optional(),
   observaciones: z.string().max(2000).optional().or(z.literal('')),
+  condiciones: z.string().max(2000).optional().or(z.literal('')),
   items: z
     .array(itemSchema)
     .min(1, 'La factura debe tener al menos una línea'),

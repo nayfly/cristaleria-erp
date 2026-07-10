@@ -15,6 +15,7 @@ export default async function NuevaFacturaPage() {
     supabase.from('productos').select('*').eq('activo', true).order('nombre'),
     supabase.from('configuracion_empresa').select('*').single(),
   ])
+  const condicionesDefault = (empresa as any)?.condiciones_factura_default ?? ''
 
   return (
     <div className="space-y-5 fade-in max-w-4xl">
@@ -33,7 +34,7 @@ export default async function NuevaFacturaPage() {
 
       {/* Suspense necesario porque FacturaForm usa useSearchParams */}
       <Suspense fallback={<div className="h-96 bg-white rounded-xl border border-slate-200 animate-pulse" />}>
-        <FacturaForm clientes={clientes as any ?? []} productos={productos as any ?? []} empresa={empresa as any} />
+        <FacturaForm clientes={clientes as any ?? []} productos={productos as any ?? []} empresa={empresa as any} condicionesDefault={condicionesDefault} />
       </Suspense>
     </div>
   )

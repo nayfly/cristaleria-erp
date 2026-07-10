@@ -33,8 +33,9 @@ const schema = z.object({
   siguiente_num_factura:       z.number().int().min(1).default(1),
   siguiente_num_presupuesto:   z.number().int().min(1).default(1),
   iva_defecto:                 z.number().min(0).max(100).default(21),
-  // Condiciones por defecto en presupuestos
+  // Condiciones por defecto en presupuestos y facturas
   condiciones_presupuesto_default: z.string().optional().or(z.literal('')),
+  condiciones_factura_default: z.string().optional().or(z.literal('')),
 })
 
 type Valores = z.infer<typeof schema>
@@ -130,6 +131,7 @@ export function ConfiguracionForm({ config }: Props) {
       siguiente_num_presupuesto:   config?.siguiente_num_presupuesto ?? 1,
       iva_defecto:                 config?.iva_defecto               ?? 21,
       condiciones_presupuesto_default: (config as any)?.condiciones_presupuesto_default ?? '',
+      condiciones_factura_default: (config as any)?.condiciones_factura_default ?? '',
     },
   })
 
@@ -407,6 +409,22 @@ export function ConfiguracionForm({ config }: Props) {
           {...register('condiciones_presupuesto_default')}
           rows={6}
           placeholder="Presupuesto válido durante 15 días..."
+          className="campo resize-none"
+        />
+      </div>
+
+      {/* Condiciones por defecto en facturas */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900">Condiciones por defecto en facturas</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Se rellenan automáticamente al crear una factura. Se pueden editar en cada factura individualmente. Déjalo en blanco si no quieres que aparezcan.
+          </p>
+        </div>
+        <textarea
+          {...register('condiciones_factura_default')}
+          rows={6}
+          placeholder="Pago a 30 días desde la fecha de factura..."
           className="campo resize-none"
         />
       </div>

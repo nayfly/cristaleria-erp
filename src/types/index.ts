@@ -58,6 +58,8 @@ export interface ConfiguracionEmpresa {
   siguiente_num_factura: number
   siguiente_num_presupuesto: number
   iva_defecto: number
+  condiciones_presupuesto_default?: string
+  condiciones_factura_default?: string
   created_at: string
   updated_at: string
 }

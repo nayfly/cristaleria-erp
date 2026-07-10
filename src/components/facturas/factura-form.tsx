@@ -19,9 +19,10 @@ interface FacturaFormProps {
   clientes: Cliente[]
   productos?: Producto[]
   empresa?: ConfiguracionEmpresa
+  condicionesDefault?: string
 }
 
-export function FacturaForm({ factura, clientes, productos = [], empresa }: FacturaFormProps) {
+export function FacturaForm({ factura, clientes, productos = [], empresa, condicionesDefault = '' }: FacturaFormProps) {
   const [showPreview, setShowPreview] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -42,6 +43,7 @@ export function FacturaForm({ factura, clientes, productos = [], empresa }: Fact
       fecha_cobro: factura?.fecha_cobro ?? '',
       forma_pago: factura?.forma_pago,
       observaciones: factura?.observaciones ?? '',
+      condiciones: (factura as any)?.condiciones ?? condicionesDefault,
       items: factura?.items?.map((item) => ({
         id: item.id,
         orden: item.orden,
@@ -94,6 +96,7 @@ export function FacturaForm({ factura, clientes, productos = [], empresa }: Fact
           fecha_cobro: data.fecha_cobro || null,
           forma_pago: data.forma_pago || null,
           observaciones: data.observaciones || null,
+          condiciones: (data as any).condiciones || null,
           ...totalesFinal,
         })
         .eq('id', factura!.id)
@@ -149,6 +152,7 @@ export function FacturaForm({ factura, clientes, productos = [], empresa }: Fact
           fecha_cobro: data.fecha_cobro || null,
           forma_pago: data.forma_pago || null,
           observaciones: data.observaciones || null,
+          condiciones: (data as any).condiciones || null,
           ...totalesFinal,
         })
         .select('id')
@@ -282,15 +286,35 @@ export function FacturaForm({ factura, clientes, productos = [], empresa }: Fact
           </div>
         </div>
 
-        {/* Observaciones */}
+        {/* Observaciones y condiciones */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-          <h2 className="text-sm font-semibold text-slate-900">Observaciones</h2>
-          <textarea
-            {...register('observaciones')}
-            rows={3}
-            placeholder="Notas internas..."
-            className="campo resize-none"
-          />
+          <h2 className="text-sm font-semibold text-slate-900">Notas</h2>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label htmlFor="observaciones" className="text-sm font-medium text-slate-700">
+                Observaciones
+              </label>
+              <textarea
+                id="observaciones"
+                {...register('observaciones')}
+                rows={3}
+                placeholder="Notas internas..."
+                className="campo resize-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="condiciones" className="text-sm font-medium text-slate-700">
+                Condiciones
+              </label>
+              <textarea
+                id="condiciones"
+                {...register('condiciones' as any)}
+                rows={3}
+                placeholder="Condiciones que aparecerán en el PDF..."
+                className="campo resize-none"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Botones */}
