@@ -109,66 +109,34 @@ export function AccionesFactura({ factura }: AccionesFacturaProps) {
     }
   }
 
-  async function obtenerURLPublica(): Promise<string | null> {
-    const res = await fetch(`/api/pdf/factura?id=${factura.id}`)
-    if (!res.ok) return null
-    const json = await res.json()
-    return json.url ?? null
+  function urlPublica() {
+    return `${window.location.origin}/ver/factura/${factura.id}`
   }
 
-  async function compartirPorWhatsApp() {
+  function compartirPorWhatsApp() {
     setMenuAbierto(false)
-    setCargando(true)
-    const toastId = toast.loading('Generando PDF...')
-    try {
-      const url = await obtenerURLPublica()
-      if (!url) throw new Error()
-
-      toast.dismiss(toastId)
-
-      const nombreCliente = cliente?.empresa ?? cliente?.nombre ?? ''
-      const mensaje = encodeURIComponent(
-        `Hola${nombreCliente ? ` ${nombreCliente}` : ''},\n\nLe adjunto la factura *${factura.numero}* por importe de *${formatCurrency(factura.total)}*.\n\n📄 Descargar PDF: ${url}\n\nQuedamos a su disposición para cualquier consulta.`
-      )
-
-      const telefono = cliente?.telefono?.replace(/\D/g, '')
-      const waUrl = telefono
-        ? `https://wa.me/${telefono.startsWith('34') ? telefono : '34' + telefono}?text=${mensaje}`
-        : `https://wa.me/?text=${mensaje}`
-
-      window.open(waUrl, '_blank')
-    } catch {
-      toast.dismiss(toastId)
-      toast.error('Error al generar el PDF')
-    } finally {
-      setCargando(false)
-    }
+    const url = urlPublica()
+    const nombreCliente = cliente?.empresa ?? cliente?.nombre ?? ''
+    const mensaje = encodeURIComponent(
+      `Hola${nombreCliente ? ` ${nombreCliente}` : ''},\n\nLe adjunto la factura *${factura.numero}* por importe de *${formatCurrency(factura.total)}*.\n\n📄 Ver factura: ${url}\n\nQuedamos a su disposición para cualquier consulta.`
+    )
+    const telefono = cliente?.telefono?.replace(/\D/g, '')
+    const waUrl = telefono
+      ? `https://wa.me/${telefono.startsWith('34') ? telefono : '34' + telefono}?text=${mensaje}`
+      : `https://wa.me/?text=${mensaje}`
+    window.open(waUrl, '_blank')
   }
 
-  async function compartirPorEmail() {
+  function compartirPorEmail() {
     setMenuAbierto(false)
-    setCargando(true)
-    const toastId = toast.loading('Generando PDF...')
-    try {
-      const url = await obtenerURLPublica()
-      if (!url) throw new Error()
-
-      toast.dismiss(toastId)
-
-      const nombreCliente = cliente?.empresa ?? cliente?.nombre ?? ''
-      const asunto = encodeURIComponent(`Factura ${factura.numero}`)
-      const cuerpo = encodeURIComponent(
-        `Estimado/a ${nombreCliente},\n\nLe enviamos la factura ${factura.numero} por importe de ${formatCurrency(factura.total)}.\n\nPuede descargarla aquí:\n${url}\n\nQuedamos a su disposición para cualquier consulta.\n\nUn saludo.`
-      )
-      const emailCliente = cliente?.email ?? ''
-
-      window.location.href = `mailto:${emailCliente}?subject=${asunto}&body=${cuerpo}`
-    } catch {
-      toast.dismiss(toastId)
-      toast.error('Error al generar el PDF')
-    } finally {
-      setCargando(false)
-    }
+    const url = urlPublica()
+    const nombreCliente = cliente?.empresa ?? cliente?.nombre ?? ''
+    const asunto = encodeURIComponent(`Factura ${factura.numero}`)
+    const cuerpo = encodeURIComponent(
+      `Estimado/a ${nombreCliente},\n\nLe enviamos la factura ${factura.numero} por importe de ${formatCurrency(factura.total)}.\n\nPuede verla y descargarla aquí:\n${url}\n\nQuedamos a su disposición para cualquier consulta.\n\nUn saludo.`
+    )
+    const emailCliente = cliente?.email ?? ''
+    window.location.href = `mailto:${emailCliente}?subject=${asunto}&body=${cuerpo}`
   }
 
   const acciones: Array<{
