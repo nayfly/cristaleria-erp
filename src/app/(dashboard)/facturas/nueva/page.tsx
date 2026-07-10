@@ -11,7 +11,7 @@ export default async function NuevaFacturaPage() {
   const supabase = await createClient()
 
   const [{ data: clientes }, { data: productos }, { data: empresa }] = await Promise.all([
-    supabase.from('clientes').select('id, nombre, empresa').eq('activo', true).order('nombre'),
+    supabase.from('clientes').select('id, nombre, empresa, direccion, poblacion, codigo_postal, provincia, email, telefono, dni_cif').eq('activo', true).order('nombre'),
     supabase.from('productos').select('*').eq('activo', true).order('nombre'),
     supabase.from('configuracion_empresa').select('*').single(),
   ])

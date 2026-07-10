@@ -83,9 +83,10 @@ export async function subirFacturaADrive({ buffer, numero, año }: { buffer: Buf
   const facturasFolderId = await obtenerOCrearSubcarpeta(drive, 'Facturas', raizId)
   const añoFolderId = await obtenerOCrearSubcarpeta(drive, año, facturasFolderId)
 
+  const nombreArchivo = `Factura-${numero.replace(/\//g, '-')}.pdf`
   const { data } = await drive.files.create({
     requestBody: {
-      name: `Factura-${numero}.pdf`,
+      name: nombreArchivo,
       parents: [añoFolderId],
     },
     media: { mimeType: 'application/pdf', body: Readable.from(buffer) },
@@ -101,9 +102,10 @@ export async function subirPresupuestoADrive({ buffer, numero, año }: { buffer:
   const presupuestosFolderId = await obtenerOCrearSubcarpeta(drive, 'Presupuestos', raizId)
   const añoFolderId = await obtenerOCrearSubcarpeta(drive, año, presupuestosFolderId)
 
+  const nombreArchivo = `Presupuesto-${numero.replace(/\//g, '-')}.pdf`
   const { data } = await drive.files.create({
     requestBody: {
-      name: `Presupuesto-${numero}.pdf`,
+      name: nombreArchivo,
       parents: [añoFolderId],
     },
     media: { mimeType: 'application/pdf', body: Readable.from(buffer) },
