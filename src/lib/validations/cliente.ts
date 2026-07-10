@@ -22,11 +22,7 @@ export const clienteSchema = z.object({
     .optional()
     .or(z.literal('')),
   direccion: z.string().max(200, 'Dirección demasiado larga').optional().or(z.literal('')),
-  codigo_postal: z
-    .string()
-    .regex(/^\d{5}$/, 'El código postal debe tener 5 dígitos')
-    .optional()
-    .or(z.literal('')),
+  codigo_postal: z.string().max(20, 'Código postal demasiado largo').optional().or(z.literal('')),
   poblacion: z.string().max(100, 'Población demasiado larga').optional().or(z.literal('')),
   provincia: z.string().max(50, 'Provincia demasiado larga').optional().or(z.literal('')),
   observaciones: z.string().max(1000, 'Observaciones demasiado largas').optional().or(z.literal('')),

@@ -12,17 +12,6 @@ interface ClienteFormProps {
   cliente?: Cliente  // Si se pasa, es edición; si no, es creación
 }
 
-const PROVINCIAS = [
-  'Álava', 'Albacete', 'Alicante', 'Almería', 'Asturias', 'Ávila',
-  'Badajoz', 'Barcelona', 'Burgos', 'Cáceres', 'Cádiz', 'Cantabria',
-  'Castellón', 'Ciudad Real', 'Córdoba', 'Cuenca', 'Gerona', 'Granada',
-  'Guadalajara', 'Guipúzcoa', 'Huelva', 'Huesca', 'Islas Baleares',
-  'Jaén', 'La Coruña', 'La Rioja', 'Las Palmas', 'León', 'Lérida',
-  'Lugo', 'Madrid', 'Málaga', 'Murcia', 'Navarra', 'Orense', 'Palencia',
-  'Pontevedra', 'Salamanca', 'Segovia', 'Sevilla', 'Soria', 'Tarragona',
-  'Santa Cruz de Tenerife', 'Teruel', 'Toledo', 'Valencia', 'Valladolid',
-  'Vizcaya', 'Zamora', 'Zaragoza',
-]
 
 export function ClienteForm({ cliente }: ClienteFormProps) {
   const router = useRouter()
@@ -44,7 +33,7 @@ export function ClienteForm({ cliente }: ClienteFormProps) {
       direccion: cliente?.direccion ?? '',
       codigo_postal: cliente?.codigo_postal ?? '',
       poblacion: cliente?.poblacion ?? '',
-      provincia: cliente?.provincia ?? 'Málaga',
+      provincia: cliente?.provincia ?? '',
       observaciones: cliente?.observaciones ?? '',
       activo: cliente?.activo ?? true,
     },
@@ -219,13 +208,14 @@ export function ClienteForm({ cliente }: ClienteFormProps) {
 
           <div className="space-y-1">
             <label htmlFor="provincia" className="text-sm font-medium text-slate-700">
-              Provincia
+              Provincia / Estado / Región
             </label>
-            <select id="provincia" {...register('provincia')} className="campo">
-              {PROVINCIAS.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+            <input
+              id="provincia"
+              {...register('provincia')}
+              placeholder="Málaga, Bayern, Île-de-France..."
+              className="campo"
+            />
           </div>
         </div>
       </div>
