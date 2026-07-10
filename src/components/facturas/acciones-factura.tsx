@@ -90,8 +90,16 @@ export function AccionesFactura({ factura }: AccionesFacturaProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo: 'factura', id: factura.id }),
       })
-      if (!res.ok) throw new Error()
+      const json = await res.json().catch(() => ({}))
       toast.dismiss(toastId)
+      if (!res.ok) {
+        if (json.error === 'TOKEN_EXPIRADO') {
+          toast.error('La conexión con Google Drive ha expirado. Ve a Configuración > Google Drive y vuelve a conectarlo.', { duration: 8000 })
+        } else {
+          toast.error('Error al subir a Google Drive')
+        }
+        return
+      }
       toast.success('Factura guardada en Google Drive')
     } catch {
       toast.dismiss(toastId)

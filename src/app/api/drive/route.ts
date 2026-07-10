@@ -137,6 +137,25 @@ export async function POST(req: NextRequest) {
     const msg = error?.message ?? String(error)
     const detail = error?.response?.data ?? error?.stack ?? null
     console.error('Error subiendo a Drive:', msg, JSON.stringify(detail))
+
+    // Token expirado o revocado — limpiar de la BD para que la UI muestre "No conectado"
+    const isInvalidGrant =
+      msg.includes('invalid_grant') ||
+      detail?.error === 'invalid_grant'
+    if (isInvalidGrant) {
+      try {
+        const admin = createAdminClient()
+        await admin
+          .from('configuracion_empresa')
+          .update({ google_drive_refresh_token: null, google_drive_folder_id: null })
+          .not('id', 'is', null)
+      } catch {}
+      return NextResponse.json(
+        { error: 'TOKEN_EXPIRADO', message: 'La conexión con Google Drive ha expirado. Ve a Configuración > Google Drive y vuelve a conectarlo.' },
+        { status: 401 }
+      )
+    }
+
     return NextResponse.json({ error: msg, detail }, { status: 500 })
   }
 }
