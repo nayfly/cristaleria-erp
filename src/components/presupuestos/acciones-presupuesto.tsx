@@ -103,9 +103,13 @@ export function AccionesPresupuesto({ presupuesto }: AccionesPresupuestoProps) {
     const mensaje = encodeURIComponent(
       `Hola${nombreCliente ? ` ${nombreCliente}` : ''},\n\nLe adjunto el presupuesto *${presupuesto.numero}* por importe de *${formatCurrency(presupuesto.total)}*.\n\n📄 Ver presupuesto: ${url}\n\nQuedamos a su disposición para cualquier consulta.`
     )
-    const telefono = cliente?.telefono?.replace(/\D/g, '')
+    const telefonoRaw = cliente?.telefono?.trim() ?? ''
+    let telefono = telefonoRaw.replace(/\s/g, '')
+    if (telefono.startsWith('+')) telefono = telefono.slice(1)
+    else if (telefono.startsWith('00')) telefono = telefono.slice(2)
+    else if (/^[679]/.test(telefono)) telefono = '34' + telefono
     const waUrl = telefono
-      ? `https://wa.me/${telefono.startsWith('34') ? telefono : '34' + telefono}?text=${mensaje}`
+      ? `https://wa.me/${telefono}?text=${mensaje}`
       : `https://wa.me/?text=${mensaje}`
     window.open(waUrl, '_blank')
   }
