@@ -91,7 +91,7 @@ export function FacturaPDF({ factura, empresa }: FacturaPDFProps) {
                 [cliente.codigo_postal, cliente.provincia].filter(Boolean).join(' '),
                 cliente.email,
                 cliente.telefono,
-                cliente.dni_cif ? `DNI/CIF/NIE: ${cliente.dni_cif}` : null,
+                cliente.dni_cif ?? null,
               ].filter(Boolean).join('\n')}
             </Text>
           </View>

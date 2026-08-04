@@ -90,7 +90,7 @@ export function PresupuestoPDF({ presupuesto, empresa }: PresupuestoPDFProps) {
                 cliente.direccion,
                 cliente.poblacion,
                 [cliente.codigo_postal, cliente.provincia].filter(Boolean).join(' '),
-                cliente.dni_cif ? `DNI/CIF/NIE: ${cliente.dni_cif}` : null,
+                cliente.dni_cif ?? null,
                 cliente.email,
               ].filter(Boolean).join('\n')}
             </Text>
