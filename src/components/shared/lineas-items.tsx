@@ -115,24 +115,38 @@ export function LineasItems({ productos = [] }: LineasItemsProps) {
         const lineaErrors = (errors.items as any)?.[index]
 
         return (
-          <div key={field.id} className="bg-white border border-slate-200 rounded-xl p-4">
-            <div className="grid grid-cols-1 md:grid-cols-[24px_2fr_80px_80px_100px_80px_100px_40px] gap-2 items-start">
-              {/* Handle */}
-              <div className="hidden md:flex items-center justify-center pt-2">
+          <div key={field.id} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+            {/* Descripción — fila completa */}
+            <div className="flex items-start gap-2">
+              <div className="hidden md:flex items-start justify-center pt-2">
                 <GripVertical className="w-4 h-4 text-slate-300" />
               </div>
-
-              {/* Descripción */}
-              <div className="md:col-span-1">
-                <input
+              <div className="flex-1">
+                <textarea
                   {...register(`items.${index}.descripcion`)}
                   placeholder="Descripción del trabajo o material..."
-                  className="campo text-sm"
+                  rows={2}
+                  className="campo text-sm resize-none"
                 />
                 {lineaErrors?.descripcion && (
                   <p className="text-xs text-red-500 mt-0.5">{lineaErrors.descripcion.message}</p>
                 )}
               </div>
+              <div className="flex items-start pt-1 md:hidden">
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  title="Eliminar línea"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Campos numéricos — segunda fila */}
+            <div className="grid grid-cols-[1fr_80px_80px_100px_80px_100px_40px] gap-2 items-center pl-0 md:pl-6">
+              <span className="hidden" />
 
               {/* Cantidad */}
               <div>
@@ -202,13 +216,12 @@ export function LineasItems({ productos = [] }: LineasItemsProps) {
                 </span>
               </div>
 
-              {/* Eliminar */}
-              <div className="flex items-center justify-center md:justify-end h-10">
+              {/* Eliminar — solo desktop */}
+              <div className="hidden md:flex items-center justify-end h-10">
                 <button
                   type="button"
                   onClick={() => remove(index)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-500
-                             hover:bg-red-50 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                   title="Eliminar línea"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
