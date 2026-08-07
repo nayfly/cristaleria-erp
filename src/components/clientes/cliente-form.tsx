@@ -40,9 +40,9 @@ export function ClienteForm({ cliente }: ClienteFormProps) {
   })
 
   async function onSubmit(data: ClienteFormValues) {
-    // Limpiar strings vacíos → undefined
+    // Limpiar strings vacíos → null (undefined omite el campo en Supabase, null lo borra)
     const payload = Object.fromEntries(
-      Object.entries(data).map(([k, v]) => [k, v === '' ? undefined : v])
+      Object.entries(data).map(([k, v]) => [k, v === '' ? null : v])
     )
 
     if (esEdicion) {
