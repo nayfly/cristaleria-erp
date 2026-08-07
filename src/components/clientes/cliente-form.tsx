@@ -152,6 +152,7 @@ export function ClienteForm({ cliente }: ClienteFormProps) {
               {...register('email')}
               type="email"
               placeholder="juan@email.com"
+              autoComplete="off"
               className="campo"
             />
             {errors.email && (
