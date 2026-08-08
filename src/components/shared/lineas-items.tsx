@@ -145,8 +145,8 @@ export function LineasItems({ productos = [] }: LineasItemsProps) {
             </div>
 
             {/* Campos numéricos — segunda fila */}
-            <div className="grid grid-cols-[1fr_80px_80px_100px_80px_100px_40px] gap-2 items-center pl-0 md:pl-6">
-              <span className="hidden" />
+            <div className="grid grid-cols-[60px_80px_100px_80px_1fr_40px] gap-2 items-center pl-0 md:pl-6">
+
 
               {/* Cantidad */}
               <div>
