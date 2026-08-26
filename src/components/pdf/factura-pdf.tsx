@@ -49,6 +49,28 @@ export function FacturaPDF({ factura, empresa }: FacturaPDFProps) {
     >
       <Page size="A4" style={estilosBase.pagina}>
 
+        {/* ── SELLO ANULADA ── */}
+        {factura.estado === 'anulada' && (
+          <View style={{
+            position: 'absolute',
+            top: 200,
+            left: 80,
+            right: 80,
+            zIndex: 10,
+            transform: 'rotate(-35deg)',
+            borderWidth: 4,
+            borderColor: '#DC2626',
+            borderStyle: 'solid',
+            borderRadius: 4,
+            padding: '8px 16px',
+            alignItems: 'center',
+          }}>
+            <Text style={{ color: '#DC2626', fontSize: 48, fontWeight: 'bold', opacity: 0.35, letterSpacing: 8 }}>
+              ANULADA
+            </Text>
+          </View>
+        )}
+
         {/* ── CABECERA ── */}
         <View style={estilosBase.cabecera}>
           {empresa.logo_url ? (
