@@ -21,6 +21,15 @@ export function GoogleDriveCard({ conectado: conectadoInicial }: GoogleDriveCard
       toast.success('Google Drive conectado correctamente')
       setConectado(true)
       router.replace('/configuracion')
+      // Lanzar sincronización automática en segundo plano
+      fetch('/api/drive/sync', { method: 'POST' })
+        .then(r => r.json())
+        .then(json => {
+          if (json.subidas > 0) {
+            toast.success(`${json.subidas} factura${json.subidas !== 1 ? 's' : ''} sincronizada${json.subidas !== 1 ? 's' : ''} con Drive`)
+          }
+        })
+        .catch(() => {})
     } else if (drive === 'error') {
       toast.error('Error al conectar Google Drive. Inténtalo de nuevo.')
       router.replace('/configuracion')

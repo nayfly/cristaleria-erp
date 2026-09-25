@@ -1,8 +1,9 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { EstadoFacturaBadge } from '@/components/shared/estado-badge'
 import { EmptyState } from '@/components/shared/empty-state'
+import { FiltrosFacturas } from '@/components/facturas/filtros-facturas'
 import { Plus, Receipt } from 'lucide-react'
 import type { Metadata } from 'next'
 import type { EstadoFactura } from '@/types'
@@ -10,12 +11,19 @@ import type { EstadoFactura } from '@/types'
 export const metadata: Metadata = { title: 'Facturas' }
 
 interface Props {
-  searchParams: Promise<{ estado?: string; pagado?: string }>
+  searchParams: Promise<{
+    estado?: string
+    pagado?: string
+    año?: string
+    desde?: string
+    hasta?: string
+  }>
 }
 
 export default async function FacturasPage({ searchParams }: Props) {
   const params = await searchParams
   const supabase = await createClient()
+  const admin = createAdminClient()
 
   let query = supabase
     .from('facturas')
@@ -30,21 +38,57 @@ export default async function FacturasPage({ searchParams }: Props) {
     query = query.eq('pagado', false).not('estado', 'eq', 'anulada')
   }
 
+  // Filtro por año
+  if (params.año) {
+    query = query
+      .gte('fecha', `${params.año}-01-01`)
+      .lte('fecha', `${params.año}-12-31`)
+  }
+
+  // Filtro por rango de número — extraemos la parte numérica de "1/121"
+  // El número tiene formato "1/NNN", filtramos por NNN
+  if (params.desde) {
+    query = query.gte('numero_secuencial', Number(params.desde))
+  }
+  if (params.hasta) {
+    query = query.lte('numero_secuencial', Number(params.hasta))
+  }
+
   const { data: facturas } = await query
 
-  const filtros = [
-    { value: 'todos', label: 'Todas', href: '/facturas' },
-    { value: 'pendiente', label: 'Pendientes', href: '/facturas?pagado=false' },
-    { value: 'emitida', label: 'Emitidas', href: '/facturas?estado=emitida' },
-    { value: 'cobrada', label: 'Cobradas', href: '/facturas?estado=cobrada' },
-    { value: 'anulada', label: 'Anuladas', href: '/facturas?estado=anulada' },
-  ]
+  // Aplicar filtro de rango en memoria si no hay columna numero_secuencial
+  // (lo hacemos extrayendo el número de "1/121")
+  let facturasFiltradas = facturas ?? []
+  if (params.desde || params.hasta) {
+    const desde = params.desde ? Number(params.desde) : 0
+    const hasta = params.hasta ? Number(params.hasta) : Infinity
+    facturasFiltradas = facturasFiltradas.filter((f) => {
+      const partes = f.numero.split('/')
+      const num = Number(partes[partes.length - 1])
+      return num >= desde && num <= hasta
+    })
+  }
 
-  const estadoActivo = params.pagado === 'false' ? 'pendiente' : (params.estado ?? 'todos')
+  // Obtener años disponibles
+  const { data: añosData } = await admin
+    .from('facturas')
+    .select('fecha')
+    .order('fecha', { ascending: false })
 
-  const totalPendiente = facturas
-    ?.filter((f) => !f.pagado && f.estado !== 'anulada')
-    .reduce((acc, f) => acc + f.total, 0) ?? 0
+  const años = [...new Set(
+    (añosData ?? []).map((f) => new Date(f.fecha).getFullYear())
+  )].sort((a, b) => b - a)
+
+  // Verificar si Drive está conectado
+  const { data: configEmpresa } = await admin
+    .from('configuracion_empresa')
+    .select('google_drive_refresh_token')
+    .single()
+  const driveConectado = !!configEmpresa?.google_drive_refresh_token
+
+  const totalPendiente = facturasFiltradas
+    .filter((f) => !f.pagado && f.estado !== 'anulada')
+    .reduce((acc, f) => acc + f.total, 0)
 
   return (
     <div className="space-y-5 fade-in">
@@ -52,7 +96,7 @@ export default async function FacturasPage({ searchParams }: Props) {
         <div>
           <h1 className="text-xl font-bold text-slate-900">Facturas</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            {facturas?.length ?? 0} factura{facturas?.length !== 1 ? 's' : ''}
+            {facturasFiltradas.length} factura{facturasFiltradas.length !== 1 ? 's' : ''}
             {totalPendiente > 0 && (
               <span className="text-red-500 ml-2">
                 · {formatCurrency(totalPendiente)} pendiente
@@ -71,23 +115,9 @@ export default async function FacturasPage({ searchParams }: Props) {
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-1.5 flex-wrap">
-        {filtros.map((f) => (
-          <Link
-            key={f.value}
-            href={f.href}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              estadoActivo === f.value
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            {f.label}
-          </Link>
-        ))}
-      </div>
+      <FiltrosFacturas años={años} driveConectado={driveConectado} />
 
-      {!facturas || facturas.length === 0 ? (
+      {facturasFiltradas.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200">
           <EmptyState
             icon={Receipt}
@@ -110,7 +140,7 @@ export default async function FacturasPage({ searchParams }: Props) {
           </div>
 
           <div className="divide-y divide-slate-100">
-            {facturas.map((f) => {
+            {facturasFiltradas.map((f) => {
               const cliente = f.cliente as { nombre: string; empresa?: string } | null
               return (
                 <Link
